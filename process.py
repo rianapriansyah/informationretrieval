@@ -36,6 +36,12 @@ def html_parser(file_path):
 					customer_name = text
 					break
 
+	for texts in soup.find_all('p'):
+		text = texts.text
+		if text is not "":
+			text = clean_text(text)
+			
+
 
 	print()
 
