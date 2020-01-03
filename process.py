@@ -39,7 +39,13 @@ def html_parser(file_path):
 	for texts in soup.find_all('p'):
 		text = texts.text
 		if text is not "":
-			text = clean_text(text)
+			#text = clean_text(text)
+			x = re.search(r"\d{1,3}.?\d{0,3}\s[a-zA-Z]{2,30}\s[a-zA-Z]{2,15}", text)
+			if x is not None:
+				customer_address = x.string
+				break
+			else:
+				continue
 			
 
 
