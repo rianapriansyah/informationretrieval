@@ -30,7 +30,7 @@ def html_parser(file_path):
 
 	for txt in soup.find_all('p'):
 		alltext += txt.text
-		alltext += " "
+		alltext += os.linesep
 
 	splitted_text = alltext.split()
 	tag = st.tag(splitted_text)
@@ -41,6 +41,8 @@ def html_parser(file_path):
 	location = get_location(locations)
 	customer_address = get_customer_location(location, alltext)
 
+	with open("Extracted.txt", "w") as text_file:
+    			text_file.write(alltext)
 
 	for texts in soup.find_all('p'):
 		text = texts.text
@@ -58,7 +60,7 @@ def html_parser(file_path):
 	print()
 
 def get_location(locations):
-	singapore_address = re.compile(r"(\d{2,3}.?)\s([a-zA-Z ]{2,30})")
+	singapore_address = re.compile(r"(	.?)\s([a-zA-Z ]{2,30})")
 
 	for loc in locations:
 		country = pycountry.countries.get(name=loc[0])
@@ -66,7 +68,7 @@ def get_location(locations):
 			return country.name
 			
 def get_customer_location(location, text):
-	
+
 	return ""
 
 def clean_text(text):
