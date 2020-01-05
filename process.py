@@ -41,9 +41,6 @@ def html_parser(file_path):
 	location = get_location(locations)
 	customer_address = get_customer_location(location, alltext)
 
-	with open("Extracted.txt", "w") as text_file:
-    			text_file.write(alltext)
-
 	for texts in soup.find_all('p'):
 		text = texts.text
 		if text is  "":
@@ -67,18 +64,19 @@ def get_location(locations):
 		if country is not None:
 			return country.name
 			
-def get_customer_location(location, text):
-
-	return ""
-
-def clean_text(text):
-	alphanum = re.compile(r"[^a-zA-Z0-9][\W]")
-	ws = re.compile(r"[\s]+")
-	text = re.sub(alphanum, ' ', text)
-	text = re.sub(ws, ' ', text)
-
-
-	return text
+def get_customer_location(loc, text):
+	address = ""
+	address_pattern = re.compile(r"\d{2,3}.?(?:[A-Za-z0-9.-]+[ ]?)+(?:Avenue|Lane|Road|Boulevard|Drive|Street|Ave|Dr|Rd|Blvd|Ln|St)\.?")
+	postal_code_pattern = ""
+	if loc == 'Singapore':
+		postal_code_pattern = re.compile(r"Singapore \d{6}")
+	
+	for line in iter(text.splitlines()):
+		
+		result = re.match(address_pattern, line)
+		if result is not None:
+			address = result.string
+			return address
 
 
 def create_parser():
@@ -103,6 +101,8 @@ def process_text_file():
 
 def get_customer_name(ppl, txts):
 	#get customer name from extracted text. 
+	#get customer name by first accurence tag PERSON, then iterate to the next tag.
+	#if the indeces of PERSON tags in a form of sequence, then we got the complete name of customer name
 	customer_name = ""
 	first_name = ""
 	last_name = ""
