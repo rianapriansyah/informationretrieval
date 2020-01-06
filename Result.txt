@@ -1,0 +1,4 @@
+Name of Customer : JOHN RIEGER
+Address of Customer : 26B TEMPLE STREET, SINGAPORE 058571
+Bank Account number : 12-145753-2
+Statement Date : 31 August 2018
