@@ -44,6 +44,7 @@ def html_parser(file_path):
 	customer_address = get_customer_location(location, soup, customer_name)
 	document_date = get_month(splitted_text)
 	customer_acc_number = get_acc_number(alltext)
+	trx_list = get_transaction_list(soup)
 
 	result = "Name of Customer : " + customer_name + os.linesep + "Address of Customer : " + customer_address + os.linesep + "Bank Account number : " + customer_acc_number + os.linesep + "Statement Date : " + document_date 
 
@@ -51,6 +52,26 @@ def html_parser(file_path):
     			text_file.write(result)
 
 	print("Result was written to {}".format("Result.txt"))
+	
+	
+def get_transaction_list(soup):
+	trx_list = []
+	table_candidate = []
+
+	for i in soup.find_all(blocktype='Separator'):
+		siblings = [z for z in i.next_siblings]
+		table_candidate = get_table_candidate(siblings)
+
+	return trx_list
+
+def get_table_candidate(siblings):
+	table = []
+	for i in siblings:
+		if i.has_attr('blocktype') and i.attrs['blocktype'] == 'Separator':
+			break
+		else:
+			table.append(i)
+	return table
 
 def get_acc_number(txt):
 	acc_number = ""
