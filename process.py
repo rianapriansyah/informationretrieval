@@ -10,7 +10,7 @@ import pycountry
 from bs4 import BeautifulSoup
 from nltk.tag import StanfordNERTagger
 from nltk.tokenize import word_tokenize
-st = StanfordNERTagger('/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz', '/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/stanford-ner.jar')
+#st = StanfordNERTagger('/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz', '/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/stanford-ner.jar')
 
 
 def html_parser(file_path):
@@ -35,18 +35,21 @@ def html_parser(file_path):
 		alltext += os.linesep
 
 	splitted_text = alltext.split()
-	tag = st.tag(splitted_text) 
-	locations = [(i, k) for (i, k) in tag if k == 'LOCATION']
-	people = [(i, k) for (i, k) in tag if k == 'PERSON']
+	#tag = st.tag(splitted_text) 
+	#locations = [(i, k) for (i, k) in tag if k == 'LOCATION']
+	#people = [(i, k) for (i, k) in tag if k == 'PERSON']
 
-	customer_name = get_customer_name(people, splitted_text)
-	location = get_location(locations)
-	customer_address = get_customer_location(location, soup, customer_name)
+	#customer_name = get_customer_name(people, splitted_text)
+	#location = get_location(locations)
+	#customer_address = get_customer_location(location, soup, customer_name)
 	document_date = get_month(splitted_text)
 	customer_acc_number = get_acc_number(alltext)
 	trx_list = get_transaction_list(soup)
 
-	result = "Name of Customer : " + customer_name + os.linesep + "Address of Customer : " + customer_address + os.linesep + "Bank Account number : " + customer_acc_number + os.linesep + "Statement Date : " + document_date 
+	result = "Name of Customer : " + customer_name + os.linesep
+	result += "Address of Customer : " + customer_address + os.linesep
+	result += "Bank Account number : " + customer_acc_number + os.linesep
+	result += "Statement Date : " + document_date 
 
 	with open("Result.txt", "w") as text_file:
     			text_file.write(result)
@@ -57,20 +60,51 @@ def html_parser(file_path):
 def get_transaction_list(soup):
 	trx_list = []
 	table_candidate = []
+	rows = []
+	column = []
+	table = {}
+	clmn = []
 
 	for i in soup.find_all(blocktype='Separator'):
-		siblings = [z for z in i.next_siblings]
+		siblings = [z for z in i.next_siblings if z is not '\n']
 		table_candidate = get_table_candidate(siblings)
+
+	row_counter = 1
+
+	for i, val in enumerate(table_candidate):
+		if val.name is 'p':
+			if i is 0:
+				prev_baseline = val.attrs['baseline']
+			else:
+				prev_baseline = table_candidate[i - 1].attrs['baseline']
+			
+			baseline =	val.attrs['baseline']
+			
+			if prev_baseline == baseline:
+				column.append(val.text.replace('\n', ''))
+			else:
+				clmn = column.copy()
+				x = str(row_counter)+"_"+prev_baseline
+				table[x] = clmn
+				column.clear()
+				column.append(val.text.replace('\n', ''))
+				prev_baseline = baseline
+				row_counter += 1
+			
 
 	return trx_list
 
 def get_table_candidate(siblings):
 	table = []
 	for i in siblings:
-		if i.has_attr('blocktype') and i.attrs['blocktype'] == 'Separator':
-			break
-		else:
-			table.append(i)
+		try:
+			if i.has_attr('blocktype') and i.attrs['blocktype'] == 'Separator':
+				break
+			else:
+				table.append(i)
+		except:
+			continue
+		
 	return table
 
 def get_acc_number(txt):
@@ -200,12 +234,12 @@ def get_month(txt):
 	return date
 
 def main():
-	args = create_parser().parse_args()
+	#args = create_parser().parse_args()
 
-	source_file = args.source_file
+	#source_file = args.source_file
 
 	#activate this line for debugger purpose
-	#source_file = "bankstatement.html" 
+	source_file = "bankstatement.html" 
 
 
 	if os.path.isfile(source_file):
