@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "C:\\Program Files\\Python36\\python.exe",
+    "python.pythonPath": "~/rian-venv/bin/python",
     "python.formatting.provider": "black"
 }

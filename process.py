@@ -6,10 +6,10 @@
 import argparse
 import os
 import re
-import pycountry
+#import pycountry
 from bs4 import BeautifulSoup
-from nltk.tag import StanfordNERTagger
-from nltk.tokenize import word_tokenize
+#from nltk.tag import StanfordNERTagger
+#from nltk.tokenize import word_tokenize
 #st = StanfordNERTagger('/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz', '/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/stanford-ner.jar')
 
 
@@ -26,7 +26,7 @@ def html_parser(file_path):
 	with open(file_path, "r") as f:
 		contents = f.read()
 
-	soup = BeautifulSoup(contents, 'lxml')
+	soup = BeautifulSoup(contents, 'html.parser')
 
 	alltext = ""
 
@@ -60,21 +60,39 @@ def html_parser(file_path):
 def get_transaction_list(soup):
 	trx_list = []
 	table_candidate = []
+	
+	ordered_table = []
+
+	for i in soup.find_all(blocktype='Separator'):
+		siblings = [z for z in i.next_siblings if i is not '\n']
+		table_candidate += get_table_candidate(siblings)
+		table_candidate += []
+
+	ordered_table = order_table(table_candidate)
+
+	return trx_list
+
+def order_table(table_candidate):
+	#table_candidate.sort()
+	table_candidate = sorted(table_candidate, key=lambda x: x['baseline'])
 	rows = []
 	column = []
 	table = {}
-	clmn = []
-
-	for i in soup.find_all(blocktype='Separator'):
-		siblings = [z for z in i.next_siblings if z is not '\n']
-		table_candidate = get_table_candidate(siblings)
-
+	attrs = {}
 	row_counter = 1
+	tolerable_value = 45
+
+	ordered = []
 
 	for i, val in enumerate(table_candidate):
-		if val.name is 'p':
+		if val.name == 'p':
 			if i is 0:
 				prev_baseline = val.attrs['baseline']
+				attrs['baseline'] = prev_baseline
+				attrs['b'] = val.attrs['b']
+				attrs['l'] = val.attrs['l']
+				attrs['r'] = val.attrs['r']
+				attrs['t'] = val.attrs['t']
 			else:
 				prev_baseline = table_candidate[i - 1].attrs['baseline']
 			
@@ -90,18 +108,24 @@ def get_transaction_list(soup):
 				column.append(val.text.replace('\n', ''))
 				prev_baseline = baseline
 				row_counter += 1
-			
 
-	return trx_list
+	return []
 
 def get_table_candidate(siblings):
 	table = []
 	for i in siblings:
+		attrs = {}
 		try:
 			if i.has_attr('blocktype') and i.attrs['blocktype'] == 'Separator':
 				break
 			else:
-				table.append(i)
+				attrs['baseline'] = int(i.attrs['baseline'])
+				attrs['b'] = int(i.attrs['b'])
+				attrs['l'] = int(i.attrs['l'])
+				attrs['r'] = int(i.attrs['r'])
+				attrs['t'] = int(i.attrs['t'])
+				attrs['name'] = i.text.replace('\n', '')
+				table.append(attrs)
 		except:
 			continue
 		
