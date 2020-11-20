@@ -10,7 +10,7 @@ import re
 from bs4 import BeautifulSoup
 #from nltk.tag import StanfordNERTagger
 #from nltk.tokenize import word_tokenize
-#st = StanfordNERTagger('/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz', '/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/stanford-ner.jar')
+st = StanfordNERTagger('/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz', '/Users/rianapriansyah/Downloads/stanford-ner-2018-10-16/stanford-ner.jar')
 
 
 def html_parser(file_path):
@@ -35,16 +35,16 @@ def html_parser(file_path):
 		alltext += os.linesep
 
 	splitted_text = alltext.split()
-	#tag = st.tag(splitted_text) 
-	#locations = [(i, k) for (i, k) in tag if k == 'LOCATION']
-	#people = [(i, k) for (i, k) in tag if k == 'PERSON']
+	tag = st.tag(splitted_text) 
+	locations = [(i, k) for (i, k) in tag if k == 'LOCATION']
+	people = [(i, k) for (i, k) in tag if k == 'PERSON']
 
-	#customer_name = get_customer_name(people, splitted_text)
-	#location = get_location(locations)
-	#customer_address = get_customer_location(location, soup, customer_name)
+	customer_name = get_customer_name(people, splitted_text)
+	location = get_location(locations)
+	customer_address = get_customer_location(location, soup, customer_name)
 	document_date = get_month(splitted_text)
 	customer_acc_number = get_acc_number(alltext)
-	trx_list = get_transaction_list(soup)
+	#trx_list = get_transaction_list(soup)
 
 	result = "Name of Customer : " + customer_name + os.linesep
 	result += "Address of Customer : " + customer_address + os.linesep
@@ -60,21 +60,21 @@ def html_parser(file_path):
 def get_transaction_list(soup):
 	trx_list = []
 	table_candidate = []
-	
+	alltext = ""
 	ordered_table = []
 
 	for i in soup.find_all(blocktype='Separator'):
-		siblings = [z for z in i.next_siblings if i is not '\n']
+		siblings = i.find_next_siblings("p")
 		table_candidate += get_table_candidate(siblings)
 		table_candidate += []
 
-	ordered_table = order_table(table_candidate)
+	processed = process(table_candidate)
 
 	return trx_list
 
-def order_table(table_candidate):
+def process(table_candidate):
 	#table_candidate.sort()
-	table_candidate = sorted(table_candidate, key=lambda x: x['baseline'])
+	#table_candidate = sorted(table_candidate, key=lambda x: x['baseline'])
 	rows = []
 	column = []
 	table = {}
@@ -85,29 +85,56 @@ def order_table(table_candidate):
 	ordered = []
 
 	for i, val in enumerate(table_candidate):
-		if val.name == 'p':
-			if i is 0:
-				prev_baseline = val.attrs['baseline']
-				attrs['baseline'] = prev_baseline
-				attrs['b'] = val.attrs['b']
-				attrs['l'] = val.attrs['l']
-				attrs['r'] = val.attrs['r']
-				attrs['t'] = val.attrs['t']
-			else:
-				prev_baseline = table_candidate[i - 1].attrs['baseline']
+		if i is 0:
+			selector = val['baseline']
+		else:
+			selector = table_candidate[i - 1]['baseline']
 			
-			baseline =	val.attrs['baseline']
+		selected =	val['baseline']
+		
+		if selector == selected:
+			column.append(val['name'])
+		else:
+			clmn = column.copy()
+			x = str(row_counter)
+			table[x] = clmn
+			column.clear()
+			column.append(val['name'])
+			selector = selected
+			row_counter += 1
+			x = str(row_counter)
+			table[x] = column
+
+	for i in range(len(table)):
+		i += 1
+		if i == 1:
+			prev = table.get(i)
+		else:
+			prev = table.get(i-1)
+
+		curr = table.get(i)
+
+
+
+		print(i)
 			
-			if prev_baseline == baseline:
-				column.append(val.text.replace('\n', ''))
-			else:
-				clmn = column.copy()
-				x = str(row_counter)+"_"+prev_baseline
-				table[x] = clmn
-				column.clear()
-				column.append(val.text.replace('\n', ''))
-				prev_baseline = baseline
-				row_counter += 1
+		#if i is 0:
+		#	selector = val['baseline']
+		#else:
+		#	selector = table_candidate[i - 1]['baseline']
+		#
+		#selected =	val['baseline']
+		#
+		#if selector == selected:
+		#	column.append(val['name'].replace('\n', ''))
+		#else:
+		#	clmn = column.copy()
+		#	x = str(row_counter)+"_"+str(selector)
+		#	table[x] = clmn
+		#	column.clear()
+		#	column.append(val['name'].replace('\n', ''))
+		#	selector = selected
+		#	row_counter += 1
 
 	return []
 
@@ -125,6 +152,8 @@ def get_table_candidate(siblings):
 				attrs['r'] = int(i.attrs['r'])
 				attrs['t'] = int(i.attrs['t'])
 				attrs['name'] = i.text.replace('\n', '')
+				attrs['sourceline'] = i.sourceline
+				attrs['sourcepos'] = i.sourcepos
 				table.append(attrs)
 		except:
 			continue

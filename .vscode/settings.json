@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "~/rian-venv/bin/python",
+    "python.pythonPath": "/Users/rianapriansyah/rian-venv/bin/python",
     "python.formatting.provider": "black"
 }
